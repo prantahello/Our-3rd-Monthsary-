@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Our 3rd Monthsary ❤️</title>
+    <style>
+        body {
+            margin: 0; background: #0a0a0a; color: white;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+            overflow: hidden; display: flex; flex-direction: column; 
+            justify-content: center; align-items: center; height: 100dvh; 
+            cursor: crosshair; touch-action: manipulation;
+        }
+
+        canvas { position: absolute; top: 0; left: 0; z-index: 1; pointer-events: none; }
+
+        .content { text-align: center; z-index: 10; width: 90%; max-width: 400px; }
+        
+        h1 { 
+            font-size: 1.8rem; margin: 0; 
+            background: linear-gradient(45deg, #ff4d4d, #f9cbff);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 8px rgba(255, 77, 77, 0.3));
+        }
+
+        #counter-box {
+            margin: 20px auto; padding: 25px 15px;
+            background: rgba(255, 255, 255, 0.07);
+            border-radius: 30px; border: 1px solid rgba(255, 77, 77, 0.3);
+            backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+        }
+
+        .days-label { font-size: 0.7rem; color: #ff99cc; text-transform: uppercase; letter-spacing: 2px; font-weight: 600; }
+        .days-number { font-size: 4.5rem; font-weight: 800; color: #ff4d4d; display: block; line-height: 1; margin: 10px 0; }
+        
+        .sub-counter { display: flex; justify-content: space-around; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px; margin-top: 15px; }
+        .sub-item span { display: block; font-size: 1.8rem; font-weight: 700; color: #ff4d4d; }
+        .sub-item label { font-size: 0.65rem; color: #ff99cc; }
+
+        #bouquet-btn {
+            margin-top: 25px; padding: 18px 40px;
+            background: #ff4d4d; color: white; border: none;
+            border-radius: 50px; font-weight: bold; cursor: pointer;
+            pointer-events: auto; font-size: 1.1rem;
+            box-shadow: 0 10px 20px rgba(255, 77, 77, 0.4);
+            transition: transform 0.2s; -webkit-tap-highlight-color: transparent;
+        }
+        #bouquet-btn:active { transform: scale(0.9); }
+
+        #mute-btn {
+            position: fixed; top: env(safe-area-inset-top, 20px); right: 20px; z-index: 1000;
+            background: rgba(255, 255, 255, 0.15); border: none;
+            color: white; width: 45px; height: 45px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; font-size: 1.2rem;
+            cursor: pointer; pointer-events: auto;
+        }
+
+        #popup {
+            display: none; position: fixed; top: 50%; left: 50%;
+            transform: translate(-50%, -50%); background: white;
+            color: #333; padding: 30px; border-radius: 30px;
+            text-align: center; z-index: 100; width: 260px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes popIn { from { transform: translate(-50%, -50%) scale(0.8); opacity: 0; } }
+        
+        #popup h2 { margin: 0; color: #ff4d4d; font-size: 1.4rem; }
+        .bouquet-emoji { font-size: 4rem; display: block; margin: 15px 0; }
+        #close-btn { margin-top: 15px; cursor: pointer; color: #999; border: none; background: none; font-size: 1rem; padding: 10px; }
+    </style>
+</head>
+<body>
+
+    <audio id="bg-music" loop>
+        <source src="https://files.catbox.moe/xvsslt.mp3" type="audio/mpeg">
+    </audio>
+
+    <button id="mute-btn" onclick="toggleMute()">🔇</button>
+
+    <div class="content">
+        <h1>Happy 3rd Monthsary! ❤️</h1>
+        <div id="counter-box">
+            <span class="days-label">Together for</span>
+            <span id="months-count" class="days-number">3</span>
+            <span class="days-label">Months</span>
+            
+            <div class="sub-counter">
+                <div class="sub-item"><span id="weeks-count">0</span><label>Weeks</label></div>
+                <div class="sub-item"><span id="days-remaining">0</span><label>Days</label></div>
+            </div>
+        </div>
+        <button id="bouquet-btn" onclick="showBouquet()">(by peanut)</button>
+    </div>
+
+    <div id="popup">
+        <h2>For You!</h2>
+        <span class="bouquet-emoji">💐🌷🌹🌸</span>
+        <p style="font-size: 0.95rem; line-height: 1.4; color: #555; font-weight: 500;">I'm wishing on dandelions all of the time... ❤️</p>
+        <button id="close-btn" onclick="closePopup()">Close</button>
+    </div>
+
+    <canvas id="canvas"></canvas>
+
+    <script>
+        const music = document.getElementById('bg-music');
+        const startDate = new Date("September 27, 2025 00:00:00");
+
+        function updateCounter() {
+            const now = new Date();
+            let months = (now.getFullYear() - startDate.getFullYear()) * 12;
+            months += now.getMonth() - startDate.getMonth();
+            if (now.getDate() < startDate.getDate()) months--;
+
+            const lastMonthiversary = new Date(startDate);
+            lastMonthiversary.setMonth(startDate.getMonth() + months);
+            
+            const diffDays = Math.floor((now - lastMonthiversary) / (1000 * 60 * 60 * 24));
+            document.getElementById("months-count").innerText = months;
+            document.getElementById("weeks-count").innerText = Math.floor(diffDays / 7);
+            document.getElementById("days-remaining").innerText = diffDays % 7;
+        }
+        updateCounter();
+        setInterval(updateCounter, 10000);
+
+        function toggleMute() {
+            if (music.paused) {
+                music.play();
+                document.getElementById('mute-btn').innerText = "🔊";
+            } else {
+                music.pause();
+                document.getElementById('mute-btn').innerText = "🔇";
+            }
+        }
+
+        function showBouquet() {
+            document.getElementById('popup').style.display = 'block';
+            document.getElementById('mute-btn').innerText = "🔊";
+            music.play().catch(() => {});
+            for(let i=0; i<20; i++) {
+                setTimeout(() => createFirework(Math.random()*window.innerWidth, Math.random()*window.innerHeight), i*120);
+            }
+        }
+        
+        function closePopup() { document.getElementById('popup').style.display = 'none'; }
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+        window.addEventListener('resize', resize); resize();
+
+        class Particle {
+            constructor(x, y, color) {
+                this.x = x; this.y = y; this.color = color;
+                this.velocity = { x: (Math.random()-0.5)*10, y: (Math.random()-0.5)*10 };
+                this.alpha = 1;
+            }
+            draw() {
+                ctx.save(); ctx.globalAlpha = this.alpha;
+                ctx.beginPath(); ctx.arc(this.x, this.y, 1.5, 0, Math.PI*2);
+                ctx.fillStyle = this.color; ctx.fill(); ctx.restore();
+            }
+            update() {
+                this.x += this.velocity.x; this.y += this.velocity.y;
+                this.velocity.y += 0.1; this.alpha -= 0.015;
+            }
+        }
+
+        function createFirework(x, y) {
+            const color = `hsl(${Math.random()*360}, 100%, 70%)`;
+            for(let i=0; i<25; i++) particles.push(new Particle(x, y, color));
+        }
+
+        function animate() {
+            ctx.fillStyle = 'rgba(10, 10, 10, 0.2)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            particles = particles.filter(p => p.alpha > 0);
+            particles.forEach(p => { p.update(); p.draw(); });
+            requestAnimationFrame(animate);
+        }
+        animate();
+
+        window.addEventListener('touchstart', (e) => {
+            if(e.target.tagName !== 'BUTTON') {
+                createFirework(e.touches[0].clientX, e.touches[0].clientY);
+                if (music.paused && music.currentTime === 0) {
+                    music.play().then(() => {
+                        document.getElementById('mute-btn').innerText = "🔊";
+                    }).catch(() => {});
+                }
+            }
+        }, {passive: true});
+    </script>
+</body>
+</html>
